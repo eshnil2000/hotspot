@@ -9,7 +9,7 @@ import os
 #------------------------------------------
 # Globals initialized to default values
 #------------------------------------------
-infraEC2_mode = 'NULL'
+autoInfraEC2_mode = 'NULL'
 
 amiDict = {'us-west-1': 'ami-f7f0ad97', 'us-east-1': '',
            'eu-west-1': '', 'ap-northeast-1': ''}
@@ -187,57 +187,52 @@ def terminateInstance(instZone, instId):
 
 #------------------------------------------
 # Public functions
-# -- infraEC2_init
-# -- infraEC2_getCurInstId
-# -- infraEC2_acquireInstance
-# -- infraEC2_deleteInstance
-# -- infraEC2_moveEBS
-# -- infraEC2_moveEBSandENI
-# -- infraEC2_status 
+# -- autoInfraEC2_init
+# -- autoInfraEC2_acquireInstance
+# -- autoInfraEC2_deleteInstance
+# -- autoInfraEC2_status 
 #------------------------------------------
 
-gEC2EbsId, gEC2EniId = '', ''
-
-def infraEC2_init(inputType = 'CLOUD', inputVal = 'NULL', inputVal2 = 'NULL'):
-    global gEC2EbsId, gEC2EniId 
+def autoInfraEC2_init(inputType = 'CLOUD', inputVal = 'NULL'):
     if type == 'SIMULATE':
-        infraEC2_mode = 'SIMULATE'
+        autoInfraEC2_mode = 'SIMULATE'
     else:
         #if checkEC2AccountStatus() == True:
-        infraEC2_mode = 'CLOUD'
-        gEC2EbsId = inputVal
-        gEC2EniId = inputVal2
+        autoInfraEC2_mode = 'CLOUD'
 
     return True 
-#END infraEC2Init
+#END autoInfraEC2Init
 
 
-def infraEC2_acquireInstance(instFamily, instZone, instType = 'on-demand', instBid = 0.0):
-    if infraEC2_mode == 'SIMULATE':
+def autoInfraEC2_acquireInstance(instFamily, instZone, instType = 'on-demand', instBid = 0.0):
+    if autoInfraEC2_mode == 'SIMULATE':
         return 'i-simulate'
 
     if instType == 'on-demand':
         return acquireStdInstance(instFamily, instZone)
     else:
         return acquireSpotInstance(instFamily, instZone, instBid)
-#END infraEC2_acquireInstance
+#END autoInfraEC2_acquireInstance
 
 
-def infraEC2_deleteInstance(instZone, instID):
-    if infraEC2_mode == 'SIMULATE':
+def autoInfraEC2_deleteInstance(instZone, instID):
+    if autoInfraEC2_mode == 'SIMULATE':
         return True 
 
     return terminateInstance(instZone, instID)
-#END infraEC2_deleteInstance
+#END autoInfraEC2_deleteInstance
 
 
-def infraEC2_status():
-    print 'EC2 infra mode: ' + infraEC2_mode
+def autoInfraEC2_status():
+    print 'EC2 infra mode: ' + autoInfraEC2_mode
     # Parse the data structures and print summary
-#END infraEC2_status
+#END autoInfraEC2_status
 
-def infraEC2_moveEBS(instZone, ec2InstId, ec2MigrInstId):
-    #result = os.system('/usr/bin/sudo /home/ubuntu/hotSpot/scripts/hotSpotCleanup.sh')
+gEC2EbsId = 'vol-05a36f8913c2dd8f1'
+gEC2EniId = 'eni-7678a579'
+
+def autoInfraEC2_moveEBS(instZone, ec2InstId, ec2MigrInstId):
+    #result = os.system('/usr/bin/sudo /home/ubuntu/automaton/autoScriptCleanup.sh')
     #if result != 0:
     #    return False
 
@@ -267,11 +262,11 @@ def infraEC2_moveEBS(instZone, ec2InstId, ec2MigrInstId):
     waiter = client.get_waiter('volume_in_use')
     waiter.wait(VolumeIds = [gEC2EbsId])
     print 'EBS volume is in-use'
-#END infraEC2_moveEBS
+#END autoInfraEC2_moveEBS
 
 
-def infraEC2_moveEbsAndEni(instZone, ec2InstId, ec2MigrInstId):
-    result = os.system('/usr/bin/sudo /home/ubuntu/hotSpot/scripts/hotSpotCleanup.sh')
+def autoInfraEC2_moveEbsAndEni(instZone, ec2InstId, ec2MigrInstId):
+    result = os.system('/usr/bin/sudo /home/ubuntu/automaton/autoScriptCleanup.sh')
     if result != 0:
         return False
 
@@ -330,64 +325,64 @@ def infraEC2_moveEbsAndEni(instZone, ec2InstId, ec2MigrInstId):
     waiter = client.get_waiter('volume_in_use')
     waiter.wait(VolumeIds = [gEC2EbsId])
     print 'EBS volume is in-use'
-#END infraEC2_moveEBS
+#END autoInfraEC2_moveEBS
 
 
-def infraEC2_setupEbsAndEni():
-    os.system('/usr/bin/sudo /home/ubuntu/hotSpot/scripts/hotSpotSetup.sh')
-#END infraEC2_setupEBSandENI
+def autoInfraEC2_setupEbsAndEni():
+    result = os.system('sudo /home/ubuntu/autoScriptSetup.sh')
+#END autoInfraEC2_setupEBSandENI
 
 
-def infraEC2_getCurInstId():
+def autoInfraEC2_getCurInstId():
     return boto.utils.get_instance_metadata()['instance-id']
-#END infraEC2_getCurInstId
+#END autoInfraEC2_getCurInstId
 
 
 #------------------------------------------
 # Microbenchmark functions 
-# -- test_acquireDelete
-# -- test_moveEbsEni
+# -- autoTest_acquireDelete
+# -- autoTest_moveEbsEni
 #------------------------------------------
 
-def test_acquireDelete(availZone):
+def autoTest_acquireDelete(availZone):
     startTime = time.time()
-    stdInstId = infraEC2_acquireInstance('m3.large', availZone, 'on-demand')
+    stdInstId = autoInfraEC2_acquireInstance('m3.large', availZone, 'on-demand')
     endTime = time.time()
     print 'Acquired STD inst ' + str(stdInstId) + ' in ' + availZone + ' in ' + str(endTime - startTime) + ' sec'
     
     startTime = time.time()
-    spotInstId = infraEC2_acquireInstance('m3.large', availZone, 'spot', 1.0)
+    spotInstId = autoInfraEC2_acquireInstance('m3.large', availZone, 'spot', 1.0)
     endTime = time.time()
     print 'Acquired SPOT inst ' + str(spotInstId) + ' in ' + availZone + ' in ' + str(endTime - startTime) + ' sec'
 
     time.sleep(60)
 
     startTime = time.time()
-    infraEC2_deleteInstance(availZone, stdInstId)
+    autoInfraEC2_deleteInstance(availZone, stdInstId)
     endTime = time.time()
     print 'Terminated STD inst ' + str(stdInstId) + ' in ' + str(endTime - startTime) + ' sec'
 
     startTime = time.time()
-    infraEC2_deleteInstance(availZone, spotInstId)
+    autoInfraEC2_deleteInstance(availZone, spotInstId)
     endTime = time.time()
     print 'Terminated SPOT inst ' + str(spotInstId) + ' in ' + str(endTime - startTime) + ' sec'
     
-#END test_acquireDelete
+#END autoTest_acquireDelete
 
 
-def test_moveEbsEni(availZone):
+def autoTest_moveEbsEni(availZone):
     startTime = time.time()
-    infraEC2_moveEbsAndEni(availZone)
+    autoInfraEC2_moveEbsAndEni(availZone)
     endTime = time.time()
     print 'Moved EBS and ENI in ' + str(endTime - startTime) + ' sec'
-#END test_moveEbsEni
+#END autoTest_moveEbsEni
 
 
-def test_migrate(availZone):
-    curInstId = infraEC2_getCurInstId()
-    migrInstId = infraEC2_acquireInstance('m3.large', availZone, 'on-demand')
-    infraEC2_moveEbsAndEni(availZone, curInstId, migrInstId)
-#END test_migrate
+def autoTest_migrate(availZone):
+    curInstId = autoInfraEC2_getCurInstId()
+    migrInstId = autoInfraEC2_acquireInstance('m3.large', availZone, 'on-demand')
+    autoInfraEC2_moveEbsAndEni(availZone, curInstId, migrInstId)
+#END autoTest_migrate
 
 
 if __name__ == '__main__':
@@ -397,9 +392,9 @@ if __name__ == '__main__':
     parser.add_argument("availZone", help="Availability Zone")
     args = parser.parse_args()
     
-    if infraEC2_init(args.ec2Mode) == True:
-        print 'infra is connected to ' + args.ec2Mode
+    if autoInfraEC2_init(args.ec2Mode) == True:
+        print 'auto infra is connected to ' + args.ec2Mode
 
-#    test_acquireDelete(args.availZone)
-#    test_moveEbsEni(args.availZone)
-    test_migrate(args.availZone)
+#    autoTest_acquireDelete(args.availZone)
+#    autoTest_moveEbsEni(args.availZone)
+    autoTest_migrate(args.availZone)

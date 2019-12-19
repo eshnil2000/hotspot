@@ -8,9 +8,9 @@ import time
 #------------------------------------------
 # Globals initialized to default values
 #------------------------------------------
-monitorApp_lxcName = 'hotSpotLXC'
-monitorApp_lastTime = datetime.now()
-monitorApp_lastCPU = 0
+autoMonitorApp_lxcName = 'autoLXC'
+autoMonitorApp_lastTime = datetime.now()
+autoMonitorApp_lastCPU = 0
 
 #------------------------------------------
 # Internal functions
@@ -18,7 +18,7 @@ monitorApp_lastCPU = 0
 
 def getCpuTime():
     atTime = datetime.now()
-    with open('/sys/fs/cgroup/cpu/lxc/hotSpotLXC/cpuacct.usage', 'r') as cpuFile:
+    with open('/sys/fs/cgroup/cpu/lxc/autoLXC/cpuacct.usage', 'r') as cpuFile:
         curUsage = int(cpuFile.readline())
         return (atTime,curUsage)
 #END getCpuTime
@@ -26,26 +26,26 @@ def getCpuTime():
 
 #------------------------------------------
 # Public functions
-# -- monitorApp_init
-# -- monitorApp_getResourceLevel 
-# -- monitorApp_status
+# -- autoMonitorApp_init
+# -- autoMonitorApp_getResourceLevel 
+# -- autoMonitorApp_status
 #------------------------------------------
 
-def monitorApp_init(lxcName):
-    global monitorApp_lastTime, monitorApp_lastCPU, monitorApp_lxcName
-    monitorApp_lxcName = lxcName
+def autoMonitorApp_init(lxcName):
+    global autoMonitorApp_lastTime, autoMonitorApp_lastCPU, autoMonitorApp_lxcName
+    autoMonitorApp_lxcName = lxcName
 
     atTime, curUsage = getCpuTime()
-    monitorApp_lastTime, monitorApp_lastCPU = atTime, curUsage 
+    autoMonitorApp_lastTime, autoMonitorApp_lastCPU = atTime, curUsage 
     print 'Initialized CPU reading (' + str(atTime) + ',' + str(curUsage) + ')'
     return True
-#END monitorAppInit
+#END autoMonitorAppInit
 
 
-def monitorApp_getResourceLevel():
-    global monitorApp_lastTime, monitorApp_lastCPU
+def autoMonitorApp_getResourceLevel():
+    global autoMonitorApp_lastTime, autoMonitorApp_lastCPU
     
-    prevTime, prevCPU = monitorApp_lastTime, monitorApp_lastCPU
+    prevTime, prevCPU = autoMonitorApp_lastTime, autoMonitorApp_lastCPU
     curTime, curCPU   = getCpuTime()
 
     timeDiff = curTime - prevTime
@@ -53,11 +53,10 @@ def monitorApp_getResourceLevel():
     curPercent = float(curCPU - prevCPU) / timeDiffInNanosec
     #print 'timeDiff = '  + str(timeDiffInNanosec) + ', cur = ' + str(curCPU) + ', prev = ' + str(prevCPU)
     
-    monitorApp_lastTime, monitorApp_lastCPU = curTime, curCPU 
-    memSize = 0 # TBA    
-
-    return curPercent * 100, memSize 
-#END monitorApp_getResourceLevel
+    autoMonitorApp_lastTime, autoMonitorApp_lastCPU = curTime, curCPU 
+    
+    return curPercent * 100 
+#END autoMonitorApp_getResourceLevel
 
 
 if __name__ == '__main__':
@@ -66,11 +65,11 @@ if __name__ == '__main__':
     parser.add_argument("lxcName", help="Name of the container to be monitored")
     args = parser.parse_args()
     
-    monitorApp_init(args.lxcName)
+    autoMonitorApp_init(args.lxcName)
     time.sleep(5)
     
     for i in range(1,5):
-        print str(monitorApp_getResourceLevel())
+        print str(autoMonitorApp_getResourceLevel())
 	time.sleep(i)
 
 
